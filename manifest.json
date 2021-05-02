@@ -1,0 +1,8 @@
+{
+  "id": "obsidian-underline",
+  "name": "Underline",
+  "description": "Add underline with shortcut",
+  "isDesktopOnly": false,
+  "js": "main.js",
+  "version": "0.0.1"
+}

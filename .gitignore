@@ -1,0 +1,12 @@
+*.zip
+
+# npm
+node_modules
+package-lock.json
+
+# build
+*.js.map
+main.js
+
+.prettierignore
+.prettierrc.json
