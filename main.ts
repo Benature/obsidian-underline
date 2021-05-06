@@ -1,13 +1,13 @@
 import { Plugin } from "obsidian";
-// import { clipboard } from "electron";
 
-export default class UnderlineSelection extends Plugin {
+export default class Underline extends Plugin {
   async onload() {
-    console.log(this.app);
+    // console.log(this.app);
+
     this.addCommand({
-      id: "obsidian-underline",
-      name: "underline",
-      callback: () => this.underlineSelection(),
+      id: "paste-url-into-selection",
+      name: "",
+      callback: () => this.urlIntoSelection(),
       hotkeys: [
         {
           modifiers: ["Mod"],
@@ -17,18 +17,20 @@ export default class UnderlineSelection extends Plugin {
     });
   }
 
-  underlineSelection(): void {
+  urlIntoSelection(): void {
     let activeLeaf: any = this.app.workspace.activeLeaf;
     let editor = activeLeaf.view.sourceMode.cmEditor;
     let selectedText = editor.somethingSelected()
       ? editor.getSelection()
       : false;
-    // let clipboardText = clipboard.readText("clipboard");
 
     if (selectedText) {
       editor.replaceSelection(`<u>${selectedText}</u>`);
     } else {
+      let cursor = editor.getCursor();
+      cursor.ch += 3;
       editor.replaceSelection(`<u></u>`);
+      editor.setCursor(cursor);
     }
   }
 }
