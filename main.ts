@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { MarkdownView, Plugin } from "obsidian";
 
 export default class Underline extends Plugin {
   async onload() {
@@ -18,8 +18,13 @@ export default class Underline extends Plugin {
   }
 
   urlIntoSelection(): void {
-    let activeLeaf: any = this.app.workspace.activeLeaf;
-    let editor = activeLeaf.view.sourceMode.cmEditor;
+    // let activeLeaf = this.app.workspace.activeLeaf;
+    let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+
+    if (!markdownView) {
+      return;
+    }
+    let editor = markdownView.editor;
     let selectedText = editor.somethingSelected()
       ? editor.getSelection()
       : false;
