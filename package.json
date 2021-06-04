@@ -1,6 +1,6 @@
 {
   "name": "obsidian-underline",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "description": "Add underline with shortcut",
   "main": "main.js",
   "scripts": {
