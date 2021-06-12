@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin } from "obsidian";
+import { MarkdownView, Plugin, EditorPosition } from "obsidian";
 
 export default class Underline extends Plugin {
   async onload() {
@@ -18,24 +18,50 @@ export default class Underline extends Plugin {
   }
 
   urlIntoSelection(): void {
-    // let activeLeaf = this.app.workspace.activeLeaf;
     let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-
     if (!markdownView) {
       return;
     }
     let editor = markdownView.editor;
-    let selectedText = editor.somethingSelected()
-      ? editor.getSelection()
-      : false;
 
-    if (selectedText) {
-      editor.replaceSelection(`<u>${selectedText}</u>`);
+    let selectedText = editor.somethingSelected() ? editor.getSelection() : "";
+
+    function Cursor(pos: number): EditorPosition {
+      return editor.offsetToPos(pos);
+    }
+
+    /* Detect whether the selected text is packed by <u></u>.
+       If true, unpack it, else pack with <u></u>. */
+
+    const fos = editor.posToOffset(editor.getCursor("from")); // from offset
+    const tos = editor.posToOffset(editor.getCursor("to")); // to offset
+    const len = selectedText.length;
+
+    var beforeText = editor.getRange(Cursor(fos - 3), Cursor(tos - len));
+    var afterText = editor.getRange(Cursor(fos + len), Cursor(tos + 4));
+
+    if (beforeText === "<u>" && afterText === "</u>") {
+      //=> undo underline
+
+      editor.setSelection(Cursor(fos - 3), Cursor(tos + 4));
+      editor.replaceSelection(`${selectedText}`);
+      // re-select
+      editor.setSelection(Cursor(fos - 3), Cursor(tos - 3));
     } else {
-      let cursor = editor.getCursor();
-      cursor.ch += 3;
-      editor.replaceSelection(`<u></u>`);
-      editor.setCursor(cursor);
+      //=> do underline
+
+      if (selectedText) {
+        // console.log("selected");
+        editor.replaceSelection(`<u>${selectedText}</u>`);
+        // re-select
+        editor.setSelection(Cursor(fos + 3), Cursor(tos + 3));
+      } else {
+        // console.log("not selected");
+        editor.replaceSelection(`<u></u>`);
+        let cursor = editor.getCursor();
+        cursor.ch -= 4;
+        editor.setCursor(cursor);
+      }
     }
   }
 }
