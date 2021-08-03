@@ -4,6 +4,13 @@ export default class Underline extends Plugin {
   async onload() {
     // console.log(this.app);
 
+    // this.app.workspace.on('layout-change', () => {
+    //   this.updateUnderline();
+    // })
+    // this.app.metadataCache.on('changed', (_file) => {
+    //   this.updateUnderline();
+    // })
+
     this.addCommand({
       id: "paste-url-into-selection",
       name: "",
