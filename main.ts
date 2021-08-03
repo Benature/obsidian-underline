@@ -39,14 +39,22 @@ export default class Underline extends Plugin {
 
     var beforeText = editor.getRange(Cursor(fos - 3), Cursor(tos - len));
     var afterText = editor.getRange(Cursor(fos + len), Cursor(tos + 4));
+    var startText = editor.getRange(Cursor(fos), Cursor(fos + 3));
+    var endText = editor.getRange(Cursor(tos - 4), Cursor(tos));
 
     if (beforeText === "<u>" && afterText === "</u>") {
-      //=> undo underline
+      //=> undo underline (inside selection)
 
       editor.setSelection(Cursor(fos - 3), Cursor(tos + 4));
       editor.replaceSelection(`${selectedText}`);
       // re-select
       editor.setSelection(Cursor(fos - 3), Cursor(tos - 3));
+    } else if (startText === "<u>" && endText === "</u>") {
+      //=> undo underline (outside selection)
+      
+      editor.replaceSelection(editor.getRange(Cursor(fos + 3), Cursor(tos - 4)));
+      // re-select
+      editor.setSelection(Cursor(fos), Cursor(tos - 7));
     } else {
       //=> do underline
 
