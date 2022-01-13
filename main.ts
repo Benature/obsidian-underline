@@ -13,7 +13,7 @@ export default class Underline extends Plugin {
 
     this.addCommand({
       id: "toggle-underline-tag",
-      name: "",
+      name: "Toggle underline tag",
       callback: () => this.urlIntoSelection(),
       hotkeys: [
         {
@@ -25,7 +25,7 @@ export default class Underline extends Plugin {
 
     this.addCommand({
       id: "toggle-center-tag",
-      name: "",
+      name: "Toggle center tag",
       callback: () => this.urlIntoSelection("<center>", "</center>"),
       hotkeys: [
         {
@@ -34,12 +34,34 @@ export default class Underline extends Plugin {
         },
       ],
     });
+
+    this.addCommand({
+      id: "toggle-link-heading",
+      name: "Toggle a link to heading in the same file",
+      callback: () => this.urlIntoSelection("[[#", "]]"),
+      hotkeys: [
+        {
+          modifiers: ["Mod"],
+          key: "3",
+        },
+      ],
+    });
+    this.addCommand({
+      id: "toggle-link-block",
+      name: "Toggle a link to block in the same file",
+      callback: () => this.urlIntoSelection("[[#^", "]]"),
+      hotkeys: [
+        {
+          modifiers: ["Mod"],
+          key: "6",
+        },
+      ],
+    });
   }
 
   urlIntoSelection(prefix: string = "<u>", suffix: string = "</u>"): void {
     const PL = prefix.length; // Prefix Length
     const SL = suffix.length; // Suffix Length
-    console.log(PL, SL);
 
     let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) {
