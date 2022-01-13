@@ -33,8 +33,17 @@ export default class Underline extends Plugin {
 
     let selectedText = editor.somethingSelected() ? editor.getSelection() : "";
 
-    function Cursor(pos: number): EditorPosition {
-      return editor.offsetToPos(pos);
+    let last_cursor = editor.getCursor(); // the cursor that at the last position of doc
+    last_cursor.line = editor.lastLine();
+    last_cursor.ch = editor.getLine(last_cursor.line).length;
+    const last_offset = editor.posToOffset(last_cursor);
+    console.log("last", last_offset);
+
+    function Cursor(offset: number): EditorPosition {
+      if (offset > last_offset) {
+        return last_cursor;
+      }
+      return editor.offsetToPos(offset);
     }
 
     /* Detect whether the selected text is packed by <u></u>.
@@ -45,21 +54,22 @@ export default class Underline extends Plugin {
     const len = selectedText.length;
 
     var beforeText = editor.getRange(Cursor(fos - 3), Cursor(tos - len));
+    console.log(tos + 4);
     var afterText = editor.getRange(Cursor(fos + len), Cursor(tos + 4));
     var startText = editor.getRange(Cursor(fos), Cursor(fos + 3));
     var endText = editor.getRange(Cursor(tos - 4), Cursor(tos));
 
     if (beforeText === "<u>" && afterText === "</u>") {
       //=> undo underline (inside selection)
-
       editor.setSelection(Cursor(fos - 3), Cursor(tos + 4));
       editor.replaceSelection(`${selectedText}`);
       // re-select
       editor.setSelection(Cursor(fos - 3), Cursor(tos - 3));
     } else if (startText === "<u>" && endText === "</u>") {
       //=> undo underline (outside selection)
-      
-      editor.replaceSelection(editor.getRange(Cursor(fos + 3), Cursor(tos - 4)));
+      editor.replaceSelection(
+        editor.getRange(Cursor(fos + 3), Cursor(tos - 4))
+      );
       // re-select
       editor.setSelection(Cursor(fos), Cursor(tos - 7));
     } else {
@@ -69,7 +79,11 @@ export default class Underline extends Plugin {
         // console.log("selected");
         editor.replaceSelection(`<u>${selectedText}</u>`);
         // re-select
-        editor.setSelection(Cursor(fos + 3), Cursor(tos + 3));
+        console.log(fos, tos);
+        editor.setSelection(
+          editor.offsetToPos(fos + 3),
+          editor.offsetToPos(tos + 3)
+        );
       } else {
         // console.log("not selected");
         editor.replaceSelection(`<u></u>`);
