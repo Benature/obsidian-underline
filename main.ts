@@ -58,6 +58,7 @@ export default class Underline extends Plugin {
       if (offset > last_offset) {
         return last_cursor;
       }
+      offset = offset < 0 ? 0 : offset;
       return editor.offsetToPos(offset);
     }
 
@@ -101,7 +102,7 @@ export default class Underline extends Plugin {
         // console.log("not selected");
         editor.replaceSelection(`${prefix}${suffix}`);
         let cursor = editor.getCursor();
-        cursor.ch -= 4;
+        cursor.ch -= SL;
         editor.setCursor(cursor);
       }
     }
