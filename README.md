@@ -13,3 +13,12 @@ Use hotkey <kbd>cmd/ctrl+U</kbd> to add an underline format, i.e. `<u>content</u
 <p align="center">
   <img src="https://user-images.githubusercontent.com/35028647/121776383-1cf5e080-cbbf-11eb-8211-6a88ce534575.gif">
 </p>
+
+
+## Support
+
+If you find this plugin useful and would like to support its development, you can sponsor me via [Buy Me a Coffee ☕️](https://www.buymeacoffee.com/benature), WeChat or Alipay, thank you!
+
+<p align="center">
+<img src="https://github.com/p4lang/behavioral-model/assets/35028647/d8471ebe-a9fb-471e-a312-0d93b8ca9a12" width="500px">
+</p>

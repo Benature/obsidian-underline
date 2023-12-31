@@ -1,5 +1,31 @@
 import { MarkdownView, Plugin, EditorPosition } from "obsidian";
 
+// Call this method inside your plugin's
+// `onload` function like so:
+// monkeyPatchConsole(this);
+// const monkeyPatchConsole = (plugin: Plugin) => {
+//   // if (!Platform.isMobile) {
+//   //   return;
+//   // }
+
+//   const logFile = `${plugin.manifest.dir}/logs.txt`;
+//   console.log(logFile);
+//   const logs: string[] = [];
+//   const logMessages = (prefix: string) => (...messages: unknown[]) => {
+//     logs.push(`\n[${prefix}]`);
+//     for (const message of messages) {
+//       logs.push(String(message));
+//     }
+//     plugin.app.vault.adapter.write(logFile, logs.join(" "));
+//   };
+
+//   console.debug = logMessages("debug");
+//   console.error = logMessages("error");
+//   console.info = logMessages("info");
+//   console.log = logMessages("log");
+//   console.warn = logMessages("warn");
+// };
+
 export default class Underline extends Plugin {
   async onload() {
     // console.log(this.app);
@@ -10,6 +36,7 @@ export default class Underline extends Plugin {
     // this.app.metadataCache.on('changed', (_file) => {
     //   this.updateUnderline();
     // })
+    // monkeyPatchConsole(this);
 
     this.addCommand({
       id: "toggle-underline-tag",
