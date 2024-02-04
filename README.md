@@ -5,7 +5,7 @@
 Use the hotkey <kbd>cmd/ctrl+U</kbd> to add an underline format, i.e. `<u>content</u>` or `<u></u>` when no selection. This plugin also supports undoing the underline when underlined text is selected.  
 
 **More!!!**: now support more prefixes and suffixes:
-- `<center>text</center>`: <kbd>cmd/ctrl+Shift+U</kbd>
+- `<center>text</center>`: <kbd>cmd/ctrl+Shift+C</kbd>
 - `[[#heading]]`: <kbd>cmd/ctrl+#</kbd>
 - `[[#^block]]`: <kbd>cmd/ctrl+^</kbd>
 
