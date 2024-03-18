@@ -1,47 +1,12 @@
-import { MarkdownView, Plugin, EditorPosition } from "obsidian";
-
-// Call this method inside your plugin's
-// `onload` function like so:
-// monkeyPatchConsole(this);
-// const monkeyPatchConsole = (plugin: Plugin) => {
-//   // if (!Platform.isMobile) {
-//   //   return;
-//   // }
-
-//   const logFile = `${plugin.manifest.dir}/logs.txt`;
-//   console.log(logFile);
-//   const logs: string[] = [];
-//   const logMessages = (prefix: string) => (...messages: unknown[]) => {
-//     logs.push(`\n[${prefix}]`);
-//     for (const message of messages) {
-//       logs.push(String(message));
-//     }
-//     plugin.app.vault.adapter.write(logFile, logs.join(" "));
-//   };
-
-//   console.debug = logMessages("debug");
-//   console.error = logMessages("error");
-//   console.info = logMessages("info");
-//   console.log = logMessages("log");
-//   console.warn = logMessages("warn");
-// };
+import { Editor, MarkdownView, Plugin, EditorPosition } from "obsidian";
 
 export default class Underline extends Plugin {
   async onload() {
-    // console.log(this.app);
-
-    // this.app.workspace.on('layout-change', () => {
-    //   this.updateUnderline();
-    // })
-    // this.app.metadataCache.on('changed', (_file) => {
-    //   this.updateUnderline();
-    // })
-    // monkeyPatchConsole(this);
-
     this.addCommand({
       id: "toggle-underline-tag",
       name: "Toggle underline tag",
-      callback: () => this.urlIntoSelection(),
+      editorCallback: (editor: Editor, view: MarkdownView) =>
+        this.wrapper(editor, view),
       hotkeys: [
         {
           modifiers: ["Mod"],
@@ -53,48 +18,51 @@ export default class Underline extends Plugin {
     this.addCommand({
       id: "toggle-center-tag",
       name: "Toggle center tag",
-      callback: () => this.urlIntoSelection("<center>", "</center>"),
-      hotkeys: [
-        {
-          modifiers: ["Mod", "Shift"],
-          key: "c",
-        },
-      ],
+      editorCallback: (editor: Editor, view: MarkdownView) =>
+        this.wrapper(editor, view, "<center>", "</center>"),
+      // hotkeys: [
+      //   {
+      //     modifiers: ["Mod", "Shift"],
+      //     key: "c",
+      //   },
+      // ],
     });
 
     this.addCommand({
       id: "toggle-link-heading",
       name: "Toggle a link to heading in the same file",
-      callback: () => this.urlIntoSelection("[[#", "]]"),
-      hotkeys: [
-        {
-          modifiers: ["Mod"],
-          key: "3",
-        },
-      ],
+      editorCallback: (editor: Editor, view: MarkdownView) =>
+        this.wrapper(editor, view, "[[#", "]]"),
+      // hotkeys: [
+      //   {
+      //     modifiers: ["Mod"],
+      //     key: "3",
+      //   },
+      // ],
     });
     this.addCommand({
       id: "toggle-link-block",
       name: "Toggle a link to block in the same file",
-      callback: () => this.urlIntoSelection("[[#^", "]]"),
-      hotkeys: [
-        {
-          modifiers: ["Mod"],
-          key: "6",
-        },
-      ],
+      editorCallback: (editor: Editor, view: MarkdownView) =>
+        this.wrapper(editor, view, "[[#^", "]]"),
+      // hotkeys: [
+      //   {
+      //     modifiers: ["Mod"],
+      //     key: "6",
+      //   },
+      // ],
     });
   }
 
-  urlIntoSelection(prefix: string = "<u>", suffix: string = "</u>"): void {
+  wrapper(editor: Editor, view: MarkdownView, prefix: string = "<u>", suffix: string = "</u>"): void {
     const PL = prefix.length; // Prefix Length
     const SL = suffix.length; // Suffix Length
 
-    let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (!markdownView) {
-      return;
-    }
-    let editor = markdownView.editor;
+    // let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+    // if (!markdownView) {
+    //   return;
+    // }
+    // let editor = markdownView.editor;
 
     let selectedText = editor.somethingSelected() ? editor.getSelection() : "";
 
