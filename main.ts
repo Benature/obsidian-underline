@@ -1,4 +1,19 @@
-import { Editor, MarkdownView, Plugin, EditorPosition } from "obsidian";
+import {
+  Editor,
+  EditorPosition,
+  EditorSelection,
+  MarkdownView,
+  Plugin,
+} from "obsidian";
+
+interface WrapperEdit {
+  index: number;
+  from: number;
+  to: number;
+  replacement: string | null;
+  anchor: number;
+  head: number;
+}
 
 export default class Underline extends Plugin {
   async onload() {
@@ -58,74 +73,197 @@ export default class Underline extends Plugin {
     });
   }
 
-  wrapper(editor: Editor, view: MarkdownView, prefix: string = "<u>", suffix: string = "</u>"): void {
-    const PL = prefix.length; // Prefix Length
-    const SL = suffix.length; // Suffix Length
+  wrapper(
+    editor: Editor,
+    _view: MarkdownView,
+    prefix: string = "<u>",
+    suffix: string = "</u>"
+  ): void {
+    const selections = editor.listSelections();
+    if (selections.length === 0) return;
 
-    // let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    // if (!markdownView) {
-    //   return;
-    // }
-    // let editor = markdownView.editor;
+    const primaryAnchor = editor.getCursor("anchor");
+    const primaryHead = editor.getCursor("head");
+    const primaryIndex = selections.findIndex(
+      (selection) =>
+        this.samePosition(selection.anchor, primaryAnchor) &&
+        this.samePosition(selection.head, primaryHead)
+    );
 
-    let selectedText = editor.somethingSelected() ? editor.getSelection() : "";
+    const edits = selections
+      .map((selection, index) =>
+        this.createEdit(editor, selection, index, prefix, suffix)
+      )
+      .sort((a, b) => a.from - b.from || a.to - b.to);
+    const nextSelections: EditorSelection[] = new Array(selections.length);
+    let offsetDelta = 0;
 
-    let last_cursor = editor.getCursor(); // the cursor that at the last position of doc
-    last_cursor.line = editor.lastLine();
-    last_cursor.ch = editor.getLine(last_cursor.line).length;
-    const last_offset = editor.posToOffset(last_cursor);
-
-    function Cursor(offset: number): EditorPosition {
-      if (offset > last_offset) {
-        return last_cursor;
-      }
-      offset = offset < 0 ? 0 : offset;
-      return editor.offsetToPos(offset);
-    }
-
-    /* Detect whether the selected text is packed by <u></u>.
-       If true, unpack it, else pack with <u></u>. */
-
-    const fos = editor.posToOffset(editor.getCursor("from")); // from offset
-    const tos = editor.posToOffset(editor.getCursor("to")); // to offset
-    const len = selectedText.length;
-
-    var beforeText = editor.getRange(Cursor(fos - PL), Cursor(tos - len));
-    var afterText = editor.getRange(Cursor(fos + len), Cursor(tos + SL));
-    var startText = editor.getRange(Cursor(fos), Cursor(fos + PL));
-    var endText = editor.getRange(Cursor(tos - SL), Cursor(tos));
-
-    if (beforeText === prefix && afterText === suffix) {
-      //=> undo underline (inside selection)
-      editor.setSelection(Cursor(fos - PL), Cursor(tos + SL));
-      editor.replaceSelection(`${selectedText}`);
-      // re-select
-      editor.setSelection(Cursor(fos - PL), Cursor(tos - PL));
-    } else if (startText === prefix && endText === suffix) {
-      //=> undo underline (outside selection)
-      editor.replaceSelection(
-        editor.getRange(Cursor(fos + PL), Cursor(tos - SL))
-      );
-      // re-select
-      editor.setSelection(Cursor(fos), Cursor(tos - PL - SL));
-    } else {
-      //=> do underline
-
-      if (selectedText) {
-        // console.log("selected");
-        editor.replaceSelection(`${prefix}${selectedText}${suffix}`);
-        // re-select
-        editor.setSelection(
-          editor.offsetToPos(fos + PL),
-          editor.offsetToPos(tos + PL)
+    // Apply edits from left to right, shifting later ranges by earlier edits.
+    // This also handles the multiple selections used by table cell selection.
+    for (const edit of edits) {
+      const currentDelta = offsetDelta;
+      if (edit.replacement !== null) {
+        editor.replaceRange(
+          edit.replacement,
+          editor.offsetToPos(edit.from + currentDelta),
+          editor.offsetToPos(edit.to + currentDelta)
         );
-      } else {
-        // console.log("not selected");
-        editor.replaceSelection(`${prefix}${suffix}`);
-        let cursor = editor.getCursor();
-        cursor.ch -= SL;
-        editor.setCursor(cursor);
+        offsetDelta += edit.replacement.length - (edit.to - edit.from);
       }
+      nextSelections[edit.index] = {
+        anchor: editor.offsetToPos(edit.anchor + currentDelta),
+        head: editor.offsetToPos(edit.head + currentDelta),
+      };
     }
+
+    editor.setSelections(nextSelections, Math.max(0, primaryIndex));
+  }
+
+  private createEdit(
+    editor: Editor,
+    selection: EditorSelection,
+    index: number,
+    prefix: string,
+    suffix: string
+  ): WrapperEdit {
+    const document = editor.getValue();
+    const anchorOffset = editor.posToOffset(selection.anchor);
+    const headOffset = editor.posToOffset(selection.head);
+    const from = Math.min(anchorOffset, headOffset);
+    const to = Math.max(anchorOffset, headOffset);
+    const backward = anchorOffset > headOffset;
+    const PL = prefix.length;
+    const SL = suffix.length;
+    const selectedText = document.slice(from, to);
+
+    // The wrappers are immediately outside the selection. This also removes
+    // an empty wrapper when the caret is between its prefix and suffix.
+    if (
+      from >= PL &&
+      to + SL <= document.length &&
+      document.slice(from - PL, from) === prefix &&
+      document.slice(to, to + SL) === suffix
+    ) {
+      const nextFrom = from - PL;
+      const nextTo = to - PL;
+      return {
+        index,
+        from: from - PL,
+        to: to + SL,
+        replacement: selectedText,
+        anchor: backward ? nextTo : nextFrom,
+        head: backward ? nextFrom : nextTo,
+      };
+    }
+
+    if (from === to) {
+      // While typing inside a wrapper, toggle off by moving outside it,
+      // matching Obsidian's bold/italic behavior instead of nesting tags.
+      if (document.slice(from, from + SL) === suffix) {
+        const beforeCursor = document.slice(0, from);
+        if (
+          beforeCursor.lastIndexOf(prefix) > beforeCursor.lastIndexOf(suffix)
+        ) {
+          return this.caretEdit(index, from, from + SL);
+        }
+      }
+      if (document.slice(from - PL, from) === prefix) {
+        return this.caretEdit(index, from, from - PL);
+      }
+
+      // With no selection, format the word under the caret. If that word is
+      // already wrapped, remove its wrapper instead of adding nested tags.
+      const word = editor.wordAt(editor.offsetToPos(from));
+      if (word) {
+        const wordFrom = editor.posToOffset(word.from);
+        const wordTo = editor.posToOffset(word.to);
+        const wordText = document.slice(wordFrom, wordTo);
+        if (
+          wordFrom >= PL &&
+          wordTo + SL <= document.length &&
+          document.slice(wordFrom - PL, wordFrom) === prefix &&
+          document.slice(wordTo, wordTo + SL) === suffix
+        ) {
+          return {
+            index,
+            from: wordFrom - PL,
+            to: wordTo + SL,
+            replacement: wordText,
+            anchor: from - PL,
+            head: from - PL,
+          };
+        }
+        if (wordFrom < wordTo) {
+          const caret = wordTo + PL + SL;
+          return {
+            index,
+            from: wordFrom,
+            to: wordTo,
+            replacement: `${prefix}${wordText}${suffix}`,
+            anchor: caret,
+            head: caret,
+          };
+        }
+      }
+
+      // Preserve the original behavior outside words: insert an empty
+      // wrapper and leave the caret ready for typing.
+      return {
+        index,
+        from,
+        to,
+        replacement: `${prefix}${suffix}`,
+        anchor: from + PL,
+        head: from + PL,
+      };
+    }
+
+    // The selection includes both wrappers.
+    if (
+      to - from >= PL + SL &&
+      document.slice(from, from + PL) === prefix &&
+      document.slice(to - SL, to) === suffix
+    ) {
+      const nextFrom = from;
+      const nextTo = to - PL - SL;
+      return {
+        index,
+        from,
+        to,
+        replacement: document.slice(from + PL, to - SL),
+        anchor: backward ? nextTo : nextFrom,
+        head: backward ? nextFrom : nextTo,
+      };
+    }
+
+    const nextFrom = from + PL;
+    const nextTo = to + PL;
+    return {
+      index,
+      from,
+      to,
+      replacement: `${prefix}${selectedText}${suffix}`,
+      anchor: backward ? nextTo : nextFrom,
+      head: backward ? nextFrom : nextTo,
+    };
+  }
+
+  private caretEdit(
+    index: number,
+    position: number,
+    target: number
+  ): WrapperEdit {
+    return {
+      index,
+      from: position,
+      to: position,
+      replacement: null,
+      anchor: target,
+      head: target,
+    };
+  }
+
+  private samePosition(a: EditorPosition, b: EditorPosition): boolean {
+    return a.line === b.line && a.ch === b.ch;
   }
 }
