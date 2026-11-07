@@ -5,6 +5,7 @@ export default class Underline extends Plugin {
     this.addCommand({
       id: "toggle-underline-tag",
       name: "Toggle underline tag",
+      icon: "lucide-underline",
       editorCallback: (editor: Editor, view: MarkdownView) =>
         this.wrapper(editor, view),
       hotkeys: [
@@ -18,6 +19,7 @@ export default class Underline extends Plugin {
     this.addCommand({
       id: "toggle-center-tag",
       name: "Toggle center tag",
+      icon: "lucide-align-center",
       editorCallback: (editor: Editor, view: MarkdownView) =>
         this.wrapper(editor, view, "<center>", "</center>"),
       // hotkeys: [
@@ -31,6 +33,7 @@ export default class Underline extends Plugin {
     this.addCommand({
       id: "toggle-link-heading",
       name: "Toggle a link to heading in the same file",
+      icon: "lucide-link",
       editorCallback: (editor: Editor, view: MarkdownView) =>
         this.wrapper(editor, view, "[[#", "]]"),
       // hotkeys: [
@@ -43,6 +46,7 @@ export default class Underline extends Plugin {
     this.addCommand({
       id: "toggle-link-block",
       name: "Toggle a link to block in the same file",
+      icon: "lucide-link",
       editorCallback: (editor: Editor, view: MarkdownView) =>
         this.wrapper(editor, view, "[[#^", "]]"),
       // hotkeys: [
