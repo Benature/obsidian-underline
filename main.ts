@@ -16,19 +16,13 @@ interface WrapperEdit {
 }
 
 export default class Underline extends Plugin {
-  async onload() {
+  onload(): void {
     this.addCommand({
       id: "toggle-underline-tag",
-      name: "Toggle underline tag",
+      name: "Toggle <u> tag",
       icon: "lucide-underline",
       editorCallback: (editor: Editor, view: MarkdownView) =>
         this.wrapper(editor, view),
-      hotkeys: [
-        {
-          modifiers: ["Mod"],
-          key: "u",
-        },
-      ],
     });
 
     this.addCommand({
