@@ -9,3 +9,4 @@ main.js
 
 .prettierignore
 .prettierrc.json
+.DS_Store
